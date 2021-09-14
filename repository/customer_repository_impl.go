@@ -8,67 +8,67 @@ import (
 	"errors"
 )
 
-type MerchantRepositoryImpl struct {
+type CustomerRepositoryImpl struct {
 }
 
-func NewMerchantRepository() MerchantRepository {
-	return &MerchantRepositoryImpl{}
+func NewCustomerRepository() CustomerRepository {
+	return &CustomerRepositoryImpl{}
 }
 
-func (repository *MerchantRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, merchant domain.Merchant) domain.Merchant {
-	SQL := "insert into merchant(name, email, address, rating) values (?,?,?,?)"
-	result, err := tx.ExecContext(ctx, SQL, merchant.Name, merchant.Email, merchant.Address, merchant.Rating)
+func (repository *CustomerRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, customer domain.Customer) domain.Customer {
+	SQL := "insert into customer(name, email, address, phone_number) values (?,?,?,?)"
+	result, err := tx.ExecContext(ctx, SQL, customer.Name, customer.Email, customer.Address, customer.PhoneNumber)
 	helper.PanicIfError(err)
 
 	id, err := result.LastInsertId()
 	helper.PanicIfError(err)
 
-	merchant.Id = int(id)
-	return merchant
+	customer.Id = int(id)
+	return customer
 }
 
-func (repository *MerchantRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, merchant domain.Merchant) domain.Merchant {
-	SQL := "update merchant set name = ?, email = ?, address = ?, rating = ? where id = ?"
-	_, err := tx.ExecContext(ctx, SQL, merchant.Name, merchant.Email, merchant.Address, merchant.Rating, merchant.Id)
+func (repository *CustomerRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, customer domain.Customer) domain.Customer {
+	SQL := "update customer set name = ?, email = ?, address = ?, phone_number = ? where id = ?"
+	_, err := tx.ExecContext(ctx, SQL, customer.Name, customer.Email, customer.Address, customer.PhoneNumber, customer.Id)
 	helper.PanicIfError(err)
 
-	return merchant
+	return customer
 }
 
-func (repository *MerchantRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, merchant domain.Merchant) {
-	SQL := "delete from merchant where id = ?"
-	_, err := tx.ExecContext(ctx, SQL, merchant.Id)
+func (repository *CustomerRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, customer domain.Customer) {
+	SQL := "delete from customer where id = ?"
+	_, err := tx.ExecContext(ctx, SQL, customer.Id)
 	helper.PanicIfError(err)
 }
 
-func (repository *MerchantRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, merchantId int) (domain.Merchant, error) {
-	SQL := "select id, name, email, address, rating from merchant where id = ?"
-	rows, err := tx.QueryContext(ctx, SQL, merchantId)
+func (repository *CustomerRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, customerId int) (domain.Customer, error) {
+	SQL := "select id, name, email, address, phone_number from customer where id = ?"
+	rows, err := tx.QueryContext(ctx, SQL, customerId)
 	helper.PanicIfError(err)
 	defer rows.Close()
 
-	merchant := domain.Merchant{}
+	customer := domain.Customer{}
 	if rows.Next() {
-		err := rows.Scan(&merchant.Id, &merchant.Name, &merchant.Email, &merchant.Address, &merchant.Rating)
+		err := rows.Scan(&customer.Id, &customer.Name, &customer.Email, &customer.Address, &customer.PhoneNumber)
 		helper.PanicIfError(err)
-		return merchant, nil
+		return customer, nil
 	} else {
-		return merchant, errors.New("merchant is not found")
+		return customer, errors.New("customer is not found")
 	}
 }
 
-func (repository *MerchantRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.Merchant {
-	SQL := "select id, name, email, address, rating from merchant"
+func (repository *CustomerRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.Customer {
+	SQL := "select id, name, email, address, phone_number from customer"
 	rows, err := tx.QueryContext(ctx, SQL)
 	helper.PanicIfError(err)
 	defer rows.Close()
 
-	var merchants []domain.Merchant
+	var customers []domain.Customer
 	for rows.Next() {
-		merchant := domain.Merchant{}
-		err := rows.Scan(&merchant.Id, &merchant.Name, &merchant.Email, &merchant.Address, &merchant.Rating)
+		customer := domain.Customer{}
+		err := rows.Scan(&customer.Id, &customer.Name, &customer.Email, &customer.Address, &customer.PhoneNumber)
 		helper.PanicIfError(err)
-		merchants = append(merchants, merchant)
+		customers = append(customers, customer)
 	}
-	return merchants
+	return customers
 }

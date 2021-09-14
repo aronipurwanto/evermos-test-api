@@ -6,10 +6,11 @@ import (
 	"database/sql"
 )
 
-type MerchantRepository interface {
-	Save(ctx context.Context, tx *sql.Tx, data domain.Merchant) domain.Merchant
-	Update(ctx context.Context, tx *sql.Tx, data domain.Merchant) domain.Merchant
-	Delete(ctx context.Context, tx *sql.Tx, data domain.Merchant)
-	FindById(ctx context.Context, tx *sql.Tx, id int) (domain.Merchant, error)
-	FindAll(ctx context.Context, tx *sql.Tx) []domain.Merchant
+type ProductRepository interface {
+	Save(ctx context.Context, tx *sql.Tx, data domain.Product) domain.Product
+	Update(ctx context.Context, tx *sql.Tx, data domain.Product) domain.Product
+	Delete(ctx context.Context, tx *sql.Tx, data domain.Product)
+	FindById(ctx context.Context, tx *sql.Tx, id int) (domain.Product, error)
+	FindByName(ctx context.Context, tx *sql.Tx, name string) []domain.Product
+	FindAll(ctx context.Context, tx *sql.Tx, merchantId int) []domain.Product
 }

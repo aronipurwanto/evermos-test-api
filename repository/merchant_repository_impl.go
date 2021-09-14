@@ -1,74 +1,74 @@
 package repository
 
 import (
+	"ahmadroni/test-evermos-api/helper"
+	"ahmadroni/test-evermos-api/model/domain"
 	"context"
 	"database/sql"
 	"errors"
-	"ahmadroni/test-evermos-api/helper"
-	"ahmadroni/test-evermos-api/model/domain"
 )
 
-type CategoryRepositoryImpl struct {
+type MerchantRepositoryImpl struct {
 }
 
-func NewCategoryRepository() CategoryRepository {
-	return &CategoryRepositoryImpl{}
+func NewMerchantRepository() MerchantRepository {
+	return &MerchantRepositoryImpl{}
 }
 
-func (repository *CategoryRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, category domain.Category) domain.Category {
-	SQL := "insert into category(name) values (?)"
-	result, err := tx.ExecContext(ctx, SQL, category.Name)
+func (repository *MerchantRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, merchant domain.Merchant) domain.Merchant {
+	SQL := "insert into merchant(name, email, address, rating) values (?,?,?,?)"
+	result, err := tx.ExecContext(ctx, SQL, merchant.Name, merchant.Email, merchant.Address, merchant.Rating)
 	helper.PanicIfError(err)
 
 	id, err := result.LastInsertId()
 	helper.PanicIfError(err)
 
-	category.Id = int(id)
-	return category
+	merchant.Id = int(id)
+	return merchant
 }
 
-func (repository *CategoryRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, category domain.Category) domain.Category {
-	SQL := "update category set name = ? where id = ?"
-	_, err := tx.ExecContext(ctx, SQL, category.Name, category.Id)
+func (repository *MerchantRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, merchant domain.Merchant) domain.Merchant {
+	SQL := "update merchant set name = ?, email = ?, address = ?, rating = ? where id = ?"
+	_, err := tx.ExecContext(ctx, SQL, merchant.Name, merchant.Email, merchant.Address, merchant.Rating, merchant.Id)
 	helper.PanicIfError(err)
 
-	return category
+	return merchant
 }
 
-func (repository *CategoryRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, category domain.Category) {
-	SQL := "delete from category where id = ?"
-	_, err := tx.ExecContext(ctx, SQL, category.Id)
+func (repository *MerchantRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, merchant domain.Merchant) {
+	SQL := "delete from merchant where id = ?"
+	_, err := tx.ExecContext(ctx, SQL, merchant.Id)
 	helper.PanicIfError(err)
 }
 
-func (repository *CategoryRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, categoryId int) (domain.Category, error) {
-	SQL := "select id, name from category where id = ?"
-	rows, err := tx.QueryContext(ctx, SQL, categoryId)
+func (repository *MerchantRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, merchantId int) (domain.Merchant, error) {
+	SQL := "select id, name, email, address, rating from merchant where id = ?"
+	rows, err := tx.QueryContext(ctx, SQL, merchantId)
 	helper.PanicIfError(err)
 	defer rows.Close()
 
-	category := domain.Category{}
+	merchant := domain.Merchant{}
 	if rows.Next() {
-		err := rows.Scan(&category.Id, &category.Name)
+		err := rows.Scan(&merchant.Id, &merchant.Name, &merchant.Email, &merchant.Address, &merchant.Rating)
 		helper.PanicIfError(err)
-		return category, nil
+		return merchant, nil
 	} else {
-		return category, errors.New("category is not found")
+		return merchant, errors.New("merchant is not found")
 	}
 }
 
-func (repository *CategoryRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.Category {
-	SQL := "select id, name from category"
+func (repository *MerchantRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.Merchant {
+	SQL := "select id, name, email, address, rating from merchant"
 	rows, err := tx.QueryContext(ctx, SQL)
 	helper.PanicIfError(err)
 	defer rows.Close()
 
-	var categories []domain.Category
+	var merchants []domain.Merchant
 	for rows.Next() {
-		category := domain.Category{}
-		err := rows.Scan(&category.Id, &category.Name)
+		merchant := domain.Merchant{}
+		err := rows.Scan(&merchant.Id, &merchant.Name, &merchant.Email, &merchant.Address, &merchant.Rating)
 		helper.PanicIfError(err)
-		categories = append(categories, category)
+		merchants = append(merchants, merchant)
 	}
-	return categories
+	return merchants
 }

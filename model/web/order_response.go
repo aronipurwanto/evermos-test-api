@@ -1,12 +1,27 @@
 package web
 
-type ProductResponse struct {
-	Id 				int `json:"id"`
-	MerchantId 		int `json:"merchant_id"`
-	CategoryId 		int `json:"category_id"`
-	Name 			string `json:"name"`
-	ImagePath 		string `json:"image_path"`
-	Price 			int `json:"price"`
-	Stock 			int `json:"stock"`
-	Rating	 		int `json:"rating"`
+import "time"
+
+type OrderResponse struct {
+	Id				int `json:"id"`
+	CustomerId 		int `json:"customer_id"`
+	Total	 		int	`json:"total"`
+	PaymentMethod	string `json:"payment_method"`
+	PaymentStatus	string	`json:"payment_status"`
+	CreatedAt		time.Time `json:"created_at"`
+	ConfirmAt		time.Time `json:"confirm_at"`
+	ShippingName	string `json:"shipping_name"`
+	ShippingAt		string `json:"shipping_at"`
+	ShippingStatus	string `json:"shipping_status"`
+	OrderDetail 	[]OrderDetailResponse `json:"order_detail"`
+}
+
+type OrderDetailResponse struct {
+	Id 			int `json:"id"`
+	OrderId		int `json:"order_id"`
+	ProductId	int `json:"product_id"`
+	MerchantId	int `json:"merchant_id"`
+	Price		int `json:"price"`
+	Quantity	int `json:"quantity"`
+	Amount 		int `json:"amount"`
 }

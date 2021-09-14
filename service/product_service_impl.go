@@ -11,21 +11,22 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type MerchantServiceImpl struct {
-	MerchantRepository repository.MerchantRepository
+type ProductServiceImpl struct {
+	ProductRepository repository.ProductRepository
 	DB                 *sql.DB
 	Validate           *validator.Validate
 }
 
-func NewMerchantService(MerchantRepository repository.MerchantRepository, DB *sql.DB, validate *validator.Validate) MerchantService {
-	return &MerchantServiceImpl{
-		MerchantRepository: MerchantRepository,
+
+func NewProductService(ProductRepository repository.ProductRepository, DB *sql.DB, validate *validator.Validate) ProductService {
+	return &ProductServiceImpl{
+		ProductRepository: ProductRepository,
 		DB:                 DB,
 		Validate:           validate,
 	}
 }
 
-func (service *MerchantServiceImpl) Create(ctx context.Context, request web.MerchantCreateRequest) web.MerchantResponse {
+func (service *ProductServiceImpl) Create(ctx context.Context, request web.ProductCreateRequest) web.ProductResponse {
 	err := service.Validate.Struct(request)
 	helper.PanicIfError(err)
 
@@ -33,16 +34,16 @@ func (service *MerchantServiceImpl) Create(ctx context.Context, request web.Merc
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
-	merchant := domain.Merchant{
+	Product := domain.Product{
 		Name: request.Name,
 	}
 
-	merchant = service.MerchantRepository.Save(ctx, tx, merchant)
+	Product = service.ProductRepository.Save(ctx, tx, Product)
 
-	return helper.ToMerchantResponse(merchant)
+	return helper.ToProductResponse(Product)
 }
 
-func (service *MerchantServiceImpl) Update(ctx context.Context, request web.MerchantUpdateRequest) web.MerchantResponse {
+func (service *ProductServiceImpl) Update(ctx context.Context, request web.ProductUpdateRequest) web.ProductResponse {
 	err := service.Validate.Struct(request)
 	helper.PanicIfError(err)
 
@@ -50,50 +51,60 @@ func (service *MerchantServiceImpl) Update(ctx context.Context, request web.Merc
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
-	merchant, err := service.MerchantRepository.FindById(ctx, tx, request.Id)
+	Product, err := service.ProductRepository.FindById(ctx, tx, request.Id)
 	if err != nil {
 		panic(exception.NewNotFoundError(err.Error()))
 	}
 
-	merchant.Name = request.Name
+	Product.Name = request.Name
 
-	merchant = service.MerchantRepository.Update(ctx, tx, merchant)
+	Product = service.ProductRepository.Update(ctx, tx, Product)
 
-	return helper.ToMerchantResponse(merchant)
+	return helper.ToProductResponse(Product)
 }
 
-func (service *MerchantServiceImpl) Delete(ctx context.Context, MerchantId int) {
+func (service *ProductServiceImpl) Delete(ctx context.Context, ProductId int) {
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
-	merchant, err := service.MerchantRepository.FindById(ctx, tx, MerchantId)
+	Product, err := service.ProductRepository.FindById(ctx, tx, ProductId)
 	if err != nil {
 		panic(exception.NewNotFoundError(err.Error()))
 	}
 
-	service.MerchantRepository.Delete(ctx, tx, merchant)
+	service.ProductRepository.Delete(ctx, tx, Product)
 }
 
-func (service *MerchantServiceImpl) FindById(ctx context.Context, MerchantId int) web.MerchantResponse {
+func (service *ProductServiceImpl) FindById(ctx context.Context, ProductId int) web.ProductResponse {
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
-	merchant, err := service.MerchantRepository.FindById(ctx, tx, MerchantId)
+	Product, err := service.ProductRepository.FindById(ctx, tx, ProductId)
 	if err != nil {
 		panic(exception.NewNotFoundError(err.Error()))
 	}
 
-	return helper.ToMerchantResponse(merchant)
+	return helper.ToProductResponse(Product)
 }
 
-func (service *MerchantServiceImpl) FindAll(ctx context.Context) []web.MerchantResponse {
+func (service *ProductServiceImpl) FindByName(ctx context.Context, name string) []web.ProductResponse {
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
-	merchants := service.MerchantRepository.FindAll(ctx, tx)
+	Products := service.ProductRepository.FindByName(ctx, tx, name)
 
-	return helper.ToMerchantResponses(merchants)
+	return helper.ToProductResponses(Products)
+}
+
+func (service *ProductServiceImpl) FindAll(ctx context.Context, merchantId int) []web.ProductResponse {
+	tx, err := service.DB.Begin()
+	helper.PanicIfError(err)
+	defer helper.CommitOrRollback(tx)
+
+	Products := service.ProductRepository.FindAll(ctx, tx, merchantId)
+
+	return helper.ToProductResponses(Products)
 }

@@ -1,110 +1,106 @@
 package service
 
 import (
-	"ahmadroni/test-evermos-api/exception"
 	"ahmadroni/test-evermos-api/helper"
 	"ahmadroni/test-evermos-api/model/domain"
 	"ahmadroni/test-evermos-api/model/web"
 	"ahmadroni/test-evermos-api/repository"
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/go-playground/validator/v10"
+	"time"
 )
 
-type ProductServiceImpl struct {
-	ProductRepository repository.ProductRepository
-	DB                 *sql.DB
-	Validate           *validator.Validate
+type OrderServiceImpl struct {
+	OrderRepository 		repository.OrderRepository
+	OrderDetailRespository	repository.OrderDetailRepository
+	ProductRepository 		repository.ProductRepository
+	DB                 		*sql.DB
+	Validate           		*validator.Validate
 }
 
-
-func NewProductService(ProductRepository repository.ProductRepository, DB *sql.DB, validate *validator.Validate) ProductService {
-	return &ProductServiceImpl{
-		ProductRepository: ProductRepository,
+func NewOrderService(orderRepository repository.OrderRepository, orderDetailRespository repository.OrderDetailRepository, productRepository repository.ProductRepository, DB *sql.DB, validate *validator.Validate) OrderService {
+	return &OrderServiceImpl{
+		OrderRepository: orderRepository,
+		OrderDetailRespository: orderDetailRespository,
+		ProductRepository: productRepository,
 		DB:                 DB,
 		Validate:           validate,
 	}
 }
 
-func (service *ProductServiceImpl) Create(ctx context.Context, request web.ProductCreateRequest) web.ProductResponse {
+func (service *OrderServiceImpl) Create(ctx context.Context, request web.OrderCreateRequest) web.OrderResponse {
 	err := service.Validate.Struct(request)
 	helper.PanicIfError(err)
 
-	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
-	defer helper.CommitOrRollback(tx)
-
-	Product := domain.Product{
-		Name: request.Name,
+	if len(request.OrderDetail) == 0 {
+		helper.PanicIfError(errors.New("Product Order is empty"))
 	}
 
-	Product = service.ProductRepository.Save(ctx, tx, Product)
-
-	return helper.ToProductResponse(Product)
-}
-
-func (service *ProductServiceImpl) Update(ctx context.Context, request web.ProductUpdateRequest) web.ProductResponse {
-	err := service.Validate.Struct(request)
-	helper.PanicIfError(err)
-
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
-	Product, err := service.ProductRepository.FindById(ctx, tx, request.Id)
-	if err != nil {
-		panic(exception.NewNotFoundError(err.Error()))
+	total := 0
+	// check item
+	for _, item := range request.OrderDetail{
+		product, err := service.ProductRepository.FindById(ctx, tx ,item.ProductId)
+		helper.PanicIfError(err)
+		if product.Stock < item.Quantity {
+			helper.PanicIfError(errors.New("Product Stock not enough"))
+			total = 0
+			break
+		}
+
+		total += item.Price * item.Quantity
 	}
 
-	Product.Name = request.Name
-
-	Product = service.ProductRepository.Update(ctx, tx, Product)
-
-	return helper.ToProductResponse(Product)
-}
-
-func (service *ProductServiceImpl) Delete(ctx context.Context, ProductId int) {
-	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
-	defer helper.CommitOrRollback(tx)
-
-	Product, err := service.ProductRepository.FindById(ctx, tx, ProductId)
-	if err != nil {
-		panic(exception.NewNotFoundError(err.Error()))
+	order := domain.Order{
+		CustomerId: request.CustomerId,
+		Total: total,
+		PaymentMethod: request.PaymentMethod,
+		PaymentStatus: request.PaymentStatus,
+		ShippingName: request.ShippingName,
 	}
 
-	service.ProductRepository.Delete(ctx, tx, Product)
-}
+	order = service.OrderRepository.Save(ctx, tx, order)
 
-func (service *ProductServiceImpl) FindById(ctx context.Context, ProductId int) web.ProductResponse {
-	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
-	defer helper.CommitOrRollback(tx)
+	var orderDetailResponses []web.OrderDetailResponse
+	for _, item := range request.OrderDetail {
+		orderDetail := domain.OrderDetail{
+			OrderId:    order.Id,
+			ProductId:  item.ProductId,
+			MerchantId: item.MerchantId,
+			Price:      item.Price,
+			Quantity:   item.Quantity,
+			Amount:     item.Amount,
+		}
+		orderDetail = service.OrderDetailRespository.Save(ctx,tx,orderDetail)
 
-	Product, err := service.ProductRepository.FindById(ctx, tx, ProductId)
-	if err != nil {
-		panic(exception.NewNotFoundError(err.Error()))
+		orderDetailResponse := web.OrderDetailResponse{
+			Id:         orderDetail.Id,
+			OrderId:    orderDetail.OrderId,
+			ProductId:  orderDetail.ProductId,
+			MerchantId: orderDetail.MerchantId,
+			Price:      orderDetail.Price,
+			Quantity:   orderDetail.Quantity,
+			Amount:     orderDetail.Amount,
+		}
+		orderDetailResponses = append(orderDetailResponses, orderDetailResponse)
 	}
-
-	return helper.ToProductResponse(Product)
-}
-
-func (service *ProductServiceImpl) FindByName(ctx context.Context, name string) []web.ProductResponse {
-	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
-	defer helper.CommitOrRollback(tx)
-
-	Products := service.ProductRepository.FindByName(ctx, tx, name)
-
-	return helper.ToProductResponses(Products)
-}
-
-func (service *ProductServiceImpl) FindAll(ctx context.Context, merchantId int) []web.ProductResponse {
-	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
-	defer helper.CommitOrRollback(tx)
-
-	Products := service.ProductRepository.FindAll(ctx, tx, merchantId)
-
-	return helper.ToProductResponses(Products)
+	response := web.OrderResponse{
+		Id:             order.Id,
+		CustomerId:     order.CustomerId,
+		Total:          order.Total,
+		PaymentMethod:  order.PaymentMethod,
+		PaymentStatus:  order.PaymentStatus,
+		CreatedAt:      time.Time{},
+		ConfirmAt:      time.Time{},
+		ShippingName:   order.ShippingName,
+		ShippingAt:     order.ShippingAt,
+		ShippingStatus: order.ShippingStatus,
+		OrderDetail:    orderDetailResponses,
+	}
+	return response
 }

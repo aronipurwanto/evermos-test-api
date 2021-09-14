@@ -1,9 +1,12 @@
 package domain
 
-type MerchantProduct struct {
-	Id		int
-	Name 	string
-	Address string
-	Email	string
-	Rating	float64
+type Product struct {
+	Id			int
+	MerchantId	int
+	CategoryId	int
+	Name 		string
+	ImagePath	string
+	Rating		float64
+	Price		int
+	Stock		int
 }

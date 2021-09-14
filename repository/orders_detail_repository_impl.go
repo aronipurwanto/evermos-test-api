@@ -7,16 +7,16 @@ import (
 	"database/sql"
 )
 
-type OrderRepositoryImpl struct {
+type OrderDetailRepositoryImpl struct {
 }
 
-func NewOrderRepository() OrderRepository {
-	return &OrderRepositoryImpl{}
+func NewOrderDetailRepository() OrderDetailRepository {
+	return &OrderDetailRepositoryImpl{}
 }
 
-func (repository *OrderRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, order domain.Order) domain.Order {
-	SQL := "insert into orders(customer_id, total,payment_method, payment_status, shipping_name, shipping_status) values (?,?,?,?,?,?)"
-	result, err := tx.ExecContext(ctx, SQL, order.CustomerId, order.PaymentMethod, "NEW", order.ShippingName, "NEW")
+func (repository *OrderDetailRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, order domain.OrderDetail) domain.OrderDetail {
+	SQL := "insert into order_details(order_id, product_id,merchant_id, price, quantity, amount) values (?,?,?,?,?,?)"
+	result, err := tx.ExecContext(ctx, SQL, order.OrderId, order.ProductId, order.MerchantId, order.Price, order.Quantity, order.Amount)
 	helper.PanicIfError(err)
 
 	id, err := result.LastInsertId()

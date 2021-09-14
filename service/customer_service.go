@@ -5,10 +5,10 @@ import (
 	"context"
 )
 
-type MerchantService interface {
-	Create(ctx context.Context, request web.MerchantCreateRequest) web.MerchantResponse
-	Update(ctx context.Context, request web.MerchantUpdateRequest) web.MerchantResponse
-	Delete(ctx context.Context, MerchantId int)
-	FindById(ctx context.Context, MerchantId int) web.MerchantResponse
-	FindAll(ctx context.Context) []web.MerchantResponse
+type CustomerService interface {
+	Create(ctx context.Context, request web.CustomerCreateRequest) web.CustomerResponse
+	Update(ctx context.Context, request web.CustomerUpdateRequest) web.CustomerResponse
+	Delete(ctx context.Context, CustomerId int)
+	FindById(ctx context.Context, CustomerId int) web.CustomerResponse
+	FindAll(ctx context.Context) []web.CustomerResponse
 }

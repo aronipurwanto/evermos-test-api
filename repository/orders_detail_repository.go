@@ -6,6 +6,6 @@ import (
 	"database/sql"
 )
 
-type OrderRepository interface {
-	Save(ctx context.Context, tx *sql.Tx, data domain.Order) domain.Order
+type OrderDetailRepository interface {
+	Save(ctx context.Context, tx *sql.Tx, data domain.OrderDetail) domain.OrderDetail
 }

@@ -1,31 +1,31 @@
 package service
 
 import (
-	"context"
-	"database/sql"
-	"github.com/go-playground/validator/v10"
 	"ahmadroni/test-evermos-api/exception"
 	"ahmadroni/test-evermos-api/helper"
 	"ahmadroni/test-evermos-api/model/domain"
 	"ahmadroni/test-evermos-api/model/web"
 	"ahmadroni/test-evermos-api/repository"
+	"context"
+	"database/sql"
+	"github.com/go-playground/validator/v10"
 )
 
-type CategoryServiceImpl struct {
-	CategoryRepository repository.CategoryRepository
+type MerchantServiceImpl struct {
+	MerchantRepository repository.MerchantRepository
 	DB                 *sql.DB
 	Validate           *validator.Validate
 }
 
-func NewCategoryService(categoryRepository repository.CategoryRepository, DB *sql.DB, validate *validator.Validate) CategoryService {
-	return &CategoryServiceImpl{
-		CategoryRepository: categoryRepository,
+func NewMerchantService(MerchantRepository repository.MerchantRepository, DB *sql.DB, validate *validator.Validate) MerchantService {
+	return &MerchantServiceImpl{
+		MerchantRepository: MerchantRepository,
 		DB:                 DB,
 		Validate:           validate,
 	}
 }
 
-func (service *CategoryServiceImpl) Create(ctx context.Context, request web.CategoryCreateRequest) web.CategoryResponse {
+func (service *MerchantServiceImpl) Create(ctx context.Context, request web.MerchantCreateRequest) web.MerchantResponse {
 	err := service.Validate.Struct(request)
 	helper.PanicIfError(err)
 
@@ -33,16 +33,16 @@ func (service *CategoryServiceImpl) Create(ctx context.Context, request web.Cate
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
-	category := domain.Category{
+	merchant := domain.Merchant{
 		Name: request.Name,
 	}
 
-	category = service.CategoryRepository.Save(ctx, tx, category)
+	merchant = service.MerchantRepository.Save(ctx, tx, merchant)
 
-	return helper.ToCategoryResponse(category)
+	return helper.ToMerchantResponse(merchant)
 }
 
-func (service *CategoryServiceImpl) Update(ctx context.Context, request web.CategoryUpdateRequest) web.CategoryResponse {
+func (service *MerchantServiceImpl) Update(ctx context.Context, request web.MerchantUpdateRequest) web.MerchantResponse {
 	err := service.Validate.Struct(request)
 	helper.PanicIfError(err)
 
@@ -50,50 +50,50 @@ func (service *CategoryServiceImpl) Update(ctx context.Context, request web.Cate
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
-	category, err := service.CategoryRepository.FindById(ctx, tx, request.Id)
+	merchant, err := service.MerchantRepository.FindById(ctx, tx, request.Id)
 	if err != nil {
 		panic(exception.NewNotFoundError(err.Error()))
 	}
 
-	category.Name = request.Name
+	merchant.Name = request.Name
 
-	category = service.CategoryRepository.Update(ctx, tx, category)
+	merchant = service.MerchantRepository.Update(ctx, tx, merchant)
 
-	return helper.ToCategoryResponse(category)
+	return helper.ToMerchantResponse(merchant)
 }
 
-func (service *CategoryServiceImpl) Delete(ctx context.Context, categoryId int) {
+func (service *MerchantServiceImpl) Delete(ctx context.Context, MerchantId int) {
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
-	category, err := service.CategoryRepository.FindById(ctx, tx, categoryId)
+	merchant, err := service.MerchantRepository.FindById(ctx, tx, MerchantId)
 	if err != nil {
 		panic(exception.NewNotFoundError(err.Error()))
 	}
 
-	service.CategoryRepository.Delete(ctx, tx, category)
+	service.MerchantRepository.Delete(ctx, tx, merchant)
 }
 
-func (service *CategoryServiceImpl) FindById(ctx context.Context, categoryId int) web.CategoryResponse {
+func (service *MerchantServiceImpl) FindById(ctx context.Context, MerchantId int) web.MerchantResponse {
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
-	category, err := service.CategoryRepository.FindById(ctx, tx, categoryId)
+	merchant, err := service.MerchantRepository.FindById(ctx, tx, MerchantId)
 	if err != nil {
 		panic(exception.NewNotFoundError(err.Error()))
 	}
 
-	return helper.ToCategoryResponse(category)
+	return helper.ToMerchantResponse(merchant)
 }
 
-func (service *CategoryServiceImpl) FindAll(ctx context.Context) []web.CategoryResponse {
+func (service *MerchantServiceImpl) FindAll(ctx context.Context) []web.MerchantResponse {
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
-	categories := service.CategoryRepository.FindAll(ctx, tx)
+	merchants := service.MerchantRepository.FindAll(ctx, tx)
 
-	return helper.ToCategoryResponses(categories)
+	return helper.ToMerchantResponses(merchants)
 }

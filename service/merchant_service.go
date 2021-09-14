@@ -1,14 +1,14 @@
 package service
 
 import (
-	"context"
 	"ahmadroni/test-evermos-api/model/web"
+	"context"
 )
 
-type CategoryService interface {
-	Create(ctx context.Context, request web.CategoryCreateRequest) web.CategoryResponse
-	Update(ctx context.Context, request web.CategoryUpdateRequest) web.CategoryResponse
-	Delete(ctx context.Context, categoryId int)
-	FindById(ctx context.Context, categoryId int) web.CategoryResponse
-	FindAll(ctx context.Context) []web.CategoryResponse
+type MerchantService interface {
+	Create(ctx context.Context, request web.MerchantCreateRequest) web.MerchantResponse
+	Update(ctx context.Context, request web.MerchantUpdateRequest) web.MerchantResponse
+	Delete(ctx context.Context, MerchantId int)
+	FindById(ctx context.Context, MerchantId int) web.MerchantResponse
+	FindAll(ctx context.Context) []web.MerchantResponse
 }

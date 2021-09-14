@@ -9,56 +9,56 @@ import (
 	"strconv"
 )
 
-type MerchantControllerImpl struct {
-	MerchantService service.MerchantService
+type CustomerControllerImpl struct {
+	CustomerService service.CustomerService
 }
 
-func NewMerchantController(MerchantService service.MerchantService) MerchantController {
-	return &MerchantControllerImpl{
-		MerchantService: MerchantService,
+func NewCustomerController(CustomerService service.CustomerService) CustomerController {
+	return &CustomerControllerImpl{
+		CustomerService: CustomerService,
 	}
 }
 
-func (controller *MerchantControllerImpl) Create(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	merchantCreateRequest := web.MerchantCreateRequest{}
-	helper.ReadFromRequestBody(request, &merchantCreateRequest)
+func (controller *CustomerControllerImpl) Create(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	customerCreateRequest := web.CustomerCreateRequest{}
+	helper.ReadFromRequestBody(request, &customerCreateRequest)
 
-	MerchantResponse := controller.MerchantService.Create(request.Context(), merchantCreateRequest)
+	customerResponse := controller.CustomerService.Create(request.Context(), customerCreateRequest)
 	webResponse := web.WebResponse{
 		Code:   200,
 		Status: "OK",
-		Data:   MerchantResponse,
+		Data:   customerResponse,
 	}
 
 	helper.WriteToResponseBody(writer, webResponse)
 }
 
-func (controller *MerchantControllerImpl) Update(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	merchantUpdateRequest := web.MerchantUpdateRequest{}
-	helper.ReadFromRequestBody(request, &merchantUpdateRequest)
+func (controller *CustomerControllerImpl) Update(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	customerUpdateRequest := web.CustomerUpdateRequest{}
+	helper.ReadFromRequestBody(request, &customerUpdateRequest)
 
-	merchantId := params.ByName("merchantId")
-	id, err := strconv.Atoi(merchantId)
+	CustomerId := params.ByName("CustomerId")
+	id, err := strconv.Atoi(CustomerId)
 	helper.PanicIfError(err)
 
-	merchantUpdateRequest.Id = id
+	customerUpdateRequest.Id = id
 
-	MerchantResponse := controller.MerchantService.Update(request.Context(), merchantUpdateRequest)
+	customerResponse := controller.CustomerService.Update(request.Context(), customerUpdateRequest)
 	webResponse := web.WebResponse{
 		Code:   200,
 		Status: "OK",
-		Data:   MerchantResponse,
+		Data:   customerResponse,
 	}
 
 	helper.WriteToResponseBody(writer, webResponse)
 }
 
-func (controller *MerchantControllerImpl) Delete(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	merchantId := params.ByName("merchantId")
-	id, err := strconv.Atoi(merchantId)
+func (controller *CustomerControllerImpl) Delete(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	customerId := params.ByName("customerId")
+	id, err := strconv.Atoi(customerId)
 	helper.PanicIfError(err)
 
-	controller.MerchantService.Delete(request.Context(), id)
+	controller.CustomerService.Delete(request.Context(), id)
 	webResponse := web.WebResponse{
 		Code:   200,
 		Status: "OK",
@@ -67,27 +67,27 @@ func (controller *MerchantControllerImpl) Delete(writer http.ResponseWriter, req
 	helper.WriteToResponseBody(writer, webResponse)
 }
 
-func (controller *MerchantControllerImpl) FindById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	merchantId := params.ByName("merchantId")
-	id, err := strconv.Atoi(merchantId)
+func (controller *CustomerControllerImpl) FindById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	customerId := params.ByName("customerId")
+	id, err := strconv.Atoi(customerId)
 	helper.PanicIfError(err)
 
-	MerchantResponse := controller.MerchantService.FindById(request.Context(), id)
+	customerResponse := controller.CustomerService.FindById(request.Context(), id)
 	webResponse := web.WebResponse{
 		Code:   200,
 		Status: "OK",
-		Data:   MerchantResponse,
+		Data:   customerResponse,
 	}
 
 	helper.WriteToResponseBody(writer, webResponse)
 }
 
-func (controller *MerchantControllerImpl) FindAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	merchantResponses := controller.MerchantService.FindAll(request.Context())
+func (controller *CustomerControllerImpl) FindAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	responses := controller.CustomerService.FindAll(request.Context())
 	webResponse := web.WebResponse{
 		Code:   200,
 		Status: "OK",
-		Data:   merchantResponses,
+		Data:   responses,
 	}
 
 	helper.WriteToResponseBody(writer, webResponse)

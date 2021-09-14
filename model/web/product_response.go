@@ -1,12 +1,12 @@
 package web
 
-type ProductUpdateRequest struct {
-	Id 				int `validate:"required" json:"id"`
-	MerchantId 		string `validate:"required,min=1,max=100" json:"merchant_id"`
-	CategoryId 		string `validate:"required,min=1,max=100" json:"category_id"`
-	Name 			string `validate:"required,min=1,max=100" json:"name"`
-	ImagePath 		string `validate:"required,min=1,max=100" json:"image_path"`
-	Price 			int `validate:"required,min=1,max=100" json:"price"`
-	Stock 			int `validate:"required,min=1,max=100" json:"stock"`
-	Rating	 		int `validate:"required,min=1,max=100" json:"rating"`
+type ProductResponse struct {
+	Id 				int `json:"id"`
+	MerchantId 		int `json:"merchant_id"`
+	CategoryId 		int `json:"category_id"`
+	Name 			string `json:"name"`
+	ImagePath 		string `json:"image_path"`
+	Price 			int `json:"price"`
+	Stock 			int `json:"stock"`
+	Rating	 		int `json:"rating"`
 }

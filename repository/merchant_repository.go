@@ -1,15 +1,15 @@
 package repository
 
 import (
+	"ahmadroni/test-evermos-api/model/domain"
 	"context"
 	"database/sql"
-	"ahmadroni/test-evermos-api/model/domain"
 )
 
-type CategoryRepository interface {
-	Save(ctx context.Context, tx *sql.Tx, category domain.Category) domain.Category
-	Update(ctx context.Context, tx *sql.Tx, category domain.Category) domain.Category
-	Delete(ctx context.Context, tx *sql.Tx, category domain.Category)
-	FindById(ctx context.Context, tx *sql.Tx, categoryId int) (domain.Category, error)
-	FindAll(ctx context.Context, tx *sql.Tx) []domain.Category
+type MerchantRepository interface {
+	Save(ctx context.Context, tx *sql.Tx, data domain.Merchant) domain.Merchant
+	Update(ctx context.Context, tx *sql.Tx, data domain.Merchant) domain.Merchant
+	Delete(ctx context.Context, tx *sql.Tx, data domain.Merchant)
+	FindById(ctx context.Context, tx *sql.Tx, id int) (domain.Merchant, error)
+	FindAll(ctx context.Context, tx *sql.Tx) []domain.Merchant
 }

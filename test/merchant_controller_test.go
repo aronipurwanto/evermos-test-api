@@ -1,62 +1,50 @@
 package test
 
 import (
+	"ahmadroni/test-evermos-api/app"
+	"ahmadroni/test-evermos-api/controller"
+	"ahmadroni/test-evermos-api/middleware"
+	"ahmadroni/test-evermos-api/model/domain"
+	"ahmadroni/test-evermos-api/repository"
+	"ahmadroni/test-evermos-api/service"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/julienschmidt/httprouter"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"ahmadroni/test-evermos-api/app"
-	"ahmadroni/test-evermos-api/controller"
-	"ahmadroni/test-evermos-api/helper"
-	"ahmadroni/test-evermos-api/middleware"
-	"ahmadroni/test-evermos-api/model/domain"
-	"ahmadroni/test-evermos-api/repository"
-	"ahmadroni/test-evermos-api/service"
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 )
 
-func setupTestDB() *sql.DB {
-	db, err := sql.Open("mysql", "root:P@ssW0rd32!@tcp(localhost:3306)/belajar_go_test")
-	helper.PanicIfError(err)
-
-	db.SetMaxIdleConns(5)
-	db.SetMaxOpenConns(20)
-	db.SetConnMaxLifetime(60 * time.Minute)
-	db.SetConnMaxIdleTime(10 * time.Minute)
-
-	return db
-}
-
-func setupRouter(db *sql.DB) http.Handler {
+func setupMerchantRouter(db *sql.DB) http.Handler {
 	validate := validator.New()
-	categoryRepository := repository.NewCategoryRepository()
-	categoryService := service.NewCategoryService(categoryRepository, db, validate)
-	categoryController := controller.NewCategoryController(categoryService)
-	router := app.NewRouter(categoryController)
+	MerchantRepository := repository.NewMerchantRepository()
+	MerchantService := service.NewMerchantService(MerchantRepository, db, validate)
+	MerchantController := controller.NewMerchantController(MerchantService)
+	router := httprouter.New()
+	app.NewMerchantRouter(MerchantController, router)
 
 	return middleware.NewAuthMiddleware(router)
 }
 
-func truncateCategory(db *sql.DB) {
-	db.Exec("TRUNCATE category")
+func truncateMerchant(db *sql.DB) {
+	db.Exec("TRUNCATE Merchant")
 }
 
-func TestCreateCategorySuccess(t *testing.T) {
+func TestCreateMerchantSuccess(t *testing.T) {
 	db := setupTestDB()
-	truncateCategory(db)
-	router := setupRouter(db)
+	truncateMerchant(db)
+	router := setupMerchantRouter(db)
 
-	requestBody := strings.NewReader(`{"name" : "Gadget"}`)
-	request := httptest.NewRequest(http.MethodPost, "http://localhost:3000/api/categories", requestBody)
+	requestBody := strings.NewReader(`{"name" : "Merchant Test", "email":"email@gmail.com","address":"Bandung","rating":5}`)
+	request := httptest.NewRequest(http.MethodPost, "http://localhost:3000/api/merchants", requestBody)
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("X-API-Key", "RAHASIA")
 
@@ -73,16 +61,16 @@ func TestCreateCategorySuccess(t *testing.T) {
 
 	assert.Equal(t, 200, int(responseBody["code"].(float64)))
 	assert.Equal(t, "OK", responseBody["status"])
-	assert.Equal(t, "Gadget", responseBody["data"].(map[string]interface{})["name"])
+	assert.Equal(t, "Merchant Test", responseBody["data"].(map[string]interface{})["name"])
 }
 
-func TestCreateCategoryFailed(t *testing.T) {
+func TestCreateMerchantFailed(t *testing.T) {
 	db := setupTestDB()
-	truncateCategory(db)
-	router := setupRouter(db)
+	truncateMerchant(db)
+	router := setupMerchantRouter(db)
 
 	requestBody := strings.NewReader(`{"name" : ""}`)
-	request := httptest.NewRequest(http.MethodPost, "http://localhost:3000/api/categories", requestBody)
+	request := httptest.NewRequest(http.MethodPost, "http://localhost:3000/api/merchants", requestBody)
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("X-API-Key", "RAHASIA")
 
@@ -101,21 +89,21 @@ func TestCreateCategoryFailed(t *testing.T) {
 	assert.Equal(t, "BAD REQUEST", responseBody["status"])
 }
 
-func TestUpdateCategorySuccess(t *testing.T) {
+func TestUpdateMerchantSuccess(t *testing.T) {
 	db := setupTestDB()
-	truncateCategory(db)
+	truncateMerchant(db)
 
 	tx, _ := db.Begin()
-	categoryRepository := repository.NewCategoryRepository()
-	category := categoryRepository.Save(context.Background(), tx, domain.Category{
+	MerchantRepository := repository.NewMerchantRepository()
+	Merchant := MerchantRepository.Save(context.Background(), tx, domain.Merchant{
 		Name: "Gadget",
 	})
 	tx.Commit()
 
-	router := setupRouter(db)
+	router := setupMerchantRouter(db)
 
 	requestBody := strings.NewReader(`{"name" : "Gadget"}`)
-	request := httptest.NewRequest(http.MethodPut, "http://localhost:3000/api/categories/"+strconv.Itoa(category.Id), requestBody)
+	request := httptest.NewRequest(http.MethodPut, "http://localhost:3000/api/merchants/"+strconv.Itoa(Merchant.Id), requestBody)
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("X-API-Key", "RAHASIA")
 
@@ -132,25 +120,25 @@ func TestUpdateCategorySuccess(t *testing.T) {
 
 	assert.Equal(t, 200, int(responseBody["code"].(float64)))
 	assert.Equal(t, "OK", responseBody["status"])
-	assert.Equal(t, category.Id, int(responseBody["data"].(map[string]interface{})["id"].(float64)))
+	assert.Equal(t, Merchant.Id, int(responseBody["data"].(map[string]interface{})["id"].(float64)))
 	assert.Equal(t, "Gadget", responseBody["data"].(map[string]interface{})["name"])
 }
 
-func TestUpdateCategoryFailed(t *testing.T) {
+func TestUpdateMerchantFailed(t *testing.T) {
 	db := setupTestDB()
-	truncateCategory(db)
+	truncateMerchant(db)
 
 	tx, _ := db.Begin()
-	categoryRepository := repository.NewCategoryRepository()
-	category := categoryRepository.Save(context.Background(), tx, domain.Category{
+	MerchantRepository := repository.NewMerchantRepository()
+	Merchant := MerchantRepository.Save(context.Background(), tx, domain.Merchant{
 		Name: "Gadget",
 	})
 	tx.Commit()
 
-	router := setupRouter(db)
+	router := setupMerchantRouter(db)
 
 	requestBody := strings.NewReader(`{"name" : ""}`)
-	request := httptest.NewRequest(http.MethodPut, "http://localhost:3000/api/categories/"+strconv.Itoa(category.Id), requestBody)
+	request := httptest.NewRequest(http.MethodPut, "http://localhost:3000/api/merchants/"+strconv.Itoa(Merchant.Id), requestBody)
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("X-API-Key", "RAHASIA")
 
@@ -169,20 +157,20 @@ func TestUpdateCategoryFailed(t *testing.T) {
 	assert.Equal(t, "BAD REQUEST", responseBody["status"])
 }
 
-func TestGetCategorySuccess(t *testing.T) {
+func TestGetMerchantSuccess(t *testing.T) {
 	db := setupTestDB()
-	truncateCategory(db)
+	truncateMerchant(db)
 
 	tx, _ := db.Begin()
-	categoryRepository := repository.NewCategoryRepository()
-	category := categoryRepository.Save(context.Background(), tx, domain.Category{
+	repository := repository.NewMerchantRepository()
+	merchant := repository.Save(context.Background(), tx, domain.Merchant{
 		Name: "Gadget",
 	})
 	tx.Commit()
 
-	router := setupRouter(db)
+	router := setupMerchantRouter(db)
 
-	request := httptest.NewRequest(http.MethodGet, "http://localhost:3000/api/categories/"+strconv.Itoa(category.Id), nil)
+	request := httptest.NewRequest(http.MethodGet, "http://localhost:3000/api/merchants/"+strconv.Itoa(merchant.Id), nil)
 	request.Header.Add("X-API-Key", "RAHASIA")
 
 	recorder := httptest.NewRecorder()
@@ -198,16 +186,16 @@ func TestGetCategorySuccess(t *testing.T) {
 
 	assert.Equal(t, 200, int(responseBody["code"].(float64)))
 	assert.Equal(t, "OK", responseBody["status"])
-	assert.Equal(t, category.Id, int(responseBody["data"].(map[string]interface{})["id"].(float64)))
-	assert.Equal(t, category.Name, responseBody["data"].(map[string]interface{})["name"])
+	assert.Equal(t, merchant.Id, int(responseBody["data"].(map[string]interface{})["id"].(float64)))
+	assert.Equal(t, merchant.Name, responseBody["data"].(map[string]interface{})["name"])
 }
 
-func TestGetCategoryFailed(t *testing.T) {
+func TestGetMerchantFailed(t *testing.T) {
 	db := setupTestDB()
-	truncateCategory(db)
-	router := setupRouter(db)
+	truncateMerchant(db)
+	router := setupMerchantRouter(db)
 
-	request := httptest.NewRequest(http.MethodGet, "http://localhost:3000/api/categories/404", nil)
+	request := httptest.NewRequest(http.MethodGet, "http://localhost:3000/api/merchants/404", nil)
 	request.Header.Add("X-API-Key", "RAHASIA")
 
 	recorder := httptest.NewRecorder()
@@ -225,20 +213,20 @@ func TestGetCategoryFailed(t *testing.T) {
 	assert.Equal(t, "NOT FOUND", responseBody["status"])
 }
 
-func TestDeleteCategorySuccess(t *testing.T) {
+func TestDeleteMerchantSuccess(t *testing.T) {
 	db := setupTestDB()
-	truncateCategory(db)
+	truncateMerchant(db)
 
 	tx, _ := db.Begin()
-	categoryRepository := repository.NewCategoryRepository()
-	category := categoryRepository.Save(context.Background(), tx, domain.Category{
+	MerchantRepository := repository.NewMerchantRepository()
+	Merchant := MerchantRepository.Save(context.Background(), tx, domain.Merchant{
 		Name: "Gadget",
 	})
 	tx.Commit()
 
-	router := setupRouter(db)
+	router := setupMerchantRouter(db)
 
-	request := httptest.NewRequest(http.MethodDelete, "http://localhost:3000/api/categories/"+strconv.Itoa(category.Id), nil)
+	request := httptest.NewRequest(http.MethodDelete, "http://localhost:3000/api/merchants/"+strconv.Itoa(Merchant.Id), nil)
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("X-API-Key", "RAHASIA")
 
@@ -257,12 +245,12 @@ func TestDeleteCategorySuccess(t *testing.T) {
 	assert.Equal(t, "OK", responseBody["status"])
 }
 
-func TestDeleteCategoryFailed(t *testing.T) {
+func TestDeleteMerchantFailed(t *testing.T) {
 	db := setupTestDB()
-	truncateCategory(db)
-	router := setupRouter(db)
+	truncateMerchant(db)
+	router := setupMerchantRouter(db)
 
-	request := httptest.NewRequest(http.MethodDelete, "http://localhost:3000/api/categories/404", nil)
+	request := httptest.NewRequest(http.MethodDelete, "http://localhost:3000/api/merchants/404", nil)
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("X-API-Key", "RAHASIA")
 
@@ -281,23 +269,23 @@ func TestDeleteCategoryFailed(t *testing.T) {
 	assert.Equal(t, "NOT FOUND", responseBody["status"])
 }
 
-func TestListCategoriesSuccess(t *testing.T) {
+func TestListMerchantsSuccess(t *testing.T) {
 	db := setupTestDB()
-	truncateCategory(db)
+	truncateMerchant(db)
 
 	tx, _ := db.Begin()
-	categoryRepository := repository.NewCategoryRepository()
-	category1 := categoryRepository.Save(context.Background(), tx, domain.Category{
+	MerchantRepository := repository.NewMerchantRepository()
+	Merchant1 := MerchantRepository.Save(context.Background(), tx, domain.Merchant{
 		Name: "Gadget",
 	})
-	category2 := categoryRepository.Save(context.Background(), tx, domain.Category{
+	Merchant2 := MerchantRepository.Save(context.Background(), tx, domain.Merchant{
 		Name: "Computer",
 	})
 	tx.Commit()
 
-	router := setupRouter(db)
+	router := setupMerchantRouter(db)
 
-	request := httptest.NewRequest(http.MethodGet, "http://localhost:3000/api/categories", nil)
+	request := httptest.NewRequest(http.MethodGet, "http://localhost:3000/api/merchants", nil)
 	request.Header.Add("X-API-Key", "RAHASIA")
 
 	recorder := httptest.NewRecorder()
@@ -316,24 +304,24 @@ func TestListCategoriesSuccess(t *testing.T) {
 
 	fmt.Println(responseBody)
 
-	var categories = responseBody["data"].([]interface{})
+	var Merchants = responseBody["data"].([]interface{})
 
-	categoryResponse1 := categories[0].(map[string]interface{})
-	categoryResponse2 := categories[1].(map[string]interface{})
+	MerchantResponse1 := Merchants[0].(map[string]interface{})
+	MerchantResponse2 := Merchants[1].(map[string]interface{})
 
-	assert.Equal(t, category1.Id, int(categoryResponse1["id"].(float64)))
-	assert.Equal(t, category1.Name, categoryResponse1["name"])
+	assert.Equal(t, Merchant1.Id, int(MerchantResponse1["id"].(float64)))
+	assert.Equal(t, Merchant1.Name, MerchantResponse1["name"])
 
-	assert.Equal(t, category2.Id, int(categoryResponse2["id"].(float64)))
-	assert.Equal(t, category2.Name, categoryResponse2["name"])
+	assert.Equal(t, Merchant2.Id, int(MerchantResponse2["id"].(float64)))
+	assert.Equal(t, Merchant2.Name, MerchantResponse2["name"])
 }
 
-func TestUnauthorized(t *testing.T) {
+func TestMerchantUnauthorized(t *testing.T) {
 	db := setupTestDB()
-	truncateCategory(db)
-	router := setupRouter(db)
+	truncateMerchant(db)
+	router := setupMerchantRouter(db)
 
-	request := httptest.NewRequest(http.MethodGet, "http://localhost:3000/api/categories", nil)
+	request := httptest.NewRequest(http.MethodGet, "http://localhost:3000/api/merchants", nil)
 	request.Header.Add("X-API-Key", "SALAH")
 
 	recorder := httptest.NewRecorder()

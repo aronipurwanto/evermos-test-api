@@ -8,67 +8,83 @@ import (
 	"errors"
 )
 
-type MerchantRepositoryImpl struct {
+type ProductRepositoryImpl struct {
 }
 
-func NewMerchantRepository() MerchantRepository {
-	return &MerchantRepositoryImpl{}
+func NewProductRepository() ProductRepository {
+	return &ProductRepositoryImpl{}
 }
 
-func (repository *MerchantRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, merchant domain.Merchant) domain.Merchant {
-	SQL := "insert into merchant(name, email, address, rating) values (?,?,?,?)"
-	result, err := tx.ExecContext(ctx, SQL, merchant.Name, merchant.Email, merchant.Address, merchant.Rating)
+func (repository *ProductRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, Product domain.Product) domain.Product {
+	SQL := "insert into product(merchant_id, category_id, name, image_path, rating, price, stock) values (?,?,?,?,?,?,?)"
+	result, err := tx.ExecContext(ctx, SQL, Product.MerchantId, Product.CategoryId, Product.Name, Product.ImagePath, Product.Rating, Product.Price, Product.Stock)
 	helper.PanicIfError(err)
 
 	id, err := result.LastInsertId()
 	helper.PanicIfError(err)
 
-	merchant.Id = int(id)
-	return merchant
+	Product.Id = int(id)
+	return Product
 }
 
-func (repository *MerchantRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, merchant domain.Merchant) domain.Merchant {
-	SQL := "update merchant set name = ?, email = ?, address = ?, rating = ? where id = ?"
-	_, err := tx.ExecContext(ctx, SQL, merchant.Name, merchant.Email, merchant.Address, merchant.Rating, merchant.Id)
+func (repository *ProductRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, Product domain.Product) domain.Product {
+	SQL := "update product set merchant_id=?, category_id=?, name=?, image_path=?, rating=?, price=?, stock=? where id = ?"
+	_, err := tx.ExecContext(ctx, SQL, Product.MerchantId, Product.CategoryId, Product.Name, Product.ImagePath, Product.Rating, Product.Price, Product.Stock, Product.Id)
 	helper.PanicIfError(err)
 
-	return merchant
+	return Product
 }
 
-func (repository *MerchantRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, merchant domain.Merchant) {
-	SQL := "delete from merchant where id = ?"
-	_, err := tx.ExecContext(ctx, SQL, merchant.Id)
+func (repository *ProductRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, Product domain.Product) {
+	SQL := "delete from product where id = ?"
+	_, err := tx.ExecContext(ctx, SQL, Product.Id)
 	helper.PanicIfError(err)
 }
 
-func (repository *MerchantRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, merchantId int) (domain.Merchant, error) {
-	SQL := "select id, name, email, address, rating from merchant where id = ?"
+func (repository *ProductRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, id int) (domain.Product, error) {
+	SQL := "select id, merchant_id, category_id, name, image_path, rating, price, stock from product where id = ?"
+	rows, err := tx.QueryContext(ctx, SQL, id)
+	helper.PanicIfError(err)
+	defer rows.Close()
+
+	Product := domain.Product{}
+	if rows.Next() {
+		err := rows.Scan(&Product.Id, &Product.MerchantId, &Product.CategoryId, &Product.Name, &Product.ImagePath, &Product.Rating, &Product.Price, &Product.Stock)
+		helper.PanicIfError(err)
+		return Product, nil
+	} else {
+		return Product, errors.New("Product is not found")
+	}
+}
+
+func (repository *ProductRepositoryImpl) FindByName(ctx context.Context, tx *sql.Tx, name string) []domain.Product {
+	SQL := "select id, merchant_id, category_id, name, image_path, rating, price, stock from product where name like '%'?'%'"
+	rows, err := tx.QueryContext(ctx, SQL, name)
+	helper.PanicIfError(err)
+	defer rows.Close()
+
+	var Products []domain.Product
+	for rows.Next() {
+		Product := domain.Product{}
+		err := rows.Scan(&Product.Id, &Product.MerchantId, &Product.CategoryId, &Product.Name, &Product.ImagePath, &Product.Rating, &Product.Price, &Product.Stock)
+		helper.PanicIfError(err)
+		Products = append(Products, Product)
+	}
+	return Products
+}
+
+func (repository *ProductRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx, merchantId int) []domain.Product {
+	SQL := "select id, merchant_id, category_id, name, image_path, rating, price, stock from product where merchant_id=?"
 	rows, err := tx.QueryContext(ctx, SQL, merchantId)
 	helper.PanicIfError(err)
 	defer rows.Close()
 
-	merchant := domain.Merchant{}
-	if rows.Next() {
-		err := rows.Scan(&merchant.Id, &merchant.Name, &merchant.Email, &merchant.Address, &merchant.Rating)
-		helper.PanicIfError(err)
-		return merchant, nil
-	} else {
-		return merchant, errors.New("merchant is not found")
-	}
-}
-
-func (repository *MerchantRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.Merchant {
-	SQL := "select id, name, email, address, rating from merchant"
-	rows, err := tx.QueryContext(ctx, SQL)
-	helper.PanicIfError(err)
-	defer rows.Close()
-
-	var merchants []domain.Merchant
+	var Products []domain.Product
 	for rows.Next() {
-		merchant := domain.Merchant{}
-		err := rows.Scan(&merchant.Id, &merchant.Name, &merchant.Email, &merchant.Address, &merchant.Rating)
+		Product := domain.Product{}
+		err := rows.Scan(&Product.Id, &Product.MerchantId, &Product.CategoryId, &Product.Name, &Product.ImagePath, &Product.Rating, &Product.Price, &Product.Stock)
 		helper.PanicIfError(err)
-		merchants = append(merchants, merchant)
+		Products = append(Products, Product)
 	}
-	return merchants
+	return Products
 }
