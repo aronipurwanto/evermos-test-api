@@ -37,3 +37,7 @@ func NewProductRouter(controller controller.ProductController, router *httproute
 	router.PUT("/api/products/:customerId", controller.Update)
 	router.DELETE("/api/products/:customerId", controller.Delete)
 }
+
+func NewOrderRouter(controller controller.OrderController, router *httprouter.Router) {
+	router.POST("/api/orders", controller.Create)
+}

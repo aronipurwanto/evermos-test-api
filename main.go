@@ -38,7 +38,13 @@ func main() {
 	productRepository := repository.NewProductRepository()
 	productService := service.NewProductService(productRepository, db, validate)
 	productController := controller.NewProductController(productService)
-	app.NewCustomerRouter(productController, router)
+	app.NewProductRouter(productController, router)
+
+	orderRepository := repository.NewOrderRepository()
+	orderDetailRepository := repository.NewOrderDetailRepository()
+	orderService := service.NewOrderService(orderRepository, orderDetailRepository, productRepository, db, validate)
+	orderController := controller.NewOrderController(orderService)
+	app.NewOrderRouter(orderController, router)
 
 	router.PanicHandler = exception.ErrorHandler
 	server := http.Server{

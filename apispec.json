@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Category RESTful API",
-    "description": "API Spec for Category RESTful API",
+    "title": "Evermos RESTful API",
+    "description": "API Spec for Evermos RESTful API",
     "version": "1.0.0"
   },
   "servers": [
@@ -14,7 +14,7 @@
     "/categories": {
       "get": {
         "security": [{
-          "CategoryAuth" : []
+          "SecurityAuth": []
         }],
         "tags": [
           "Category API"
@@ -50,7 +50,7 @@
       },
       "post": {
         "security": [{
-          "CategoryAuth" : []
+          "SecurityAuth": []
         }],
         "tags": ["Category API"],
         "description": "Create new Category",
@@ -92,7 +92,7 @@
     "/categories/{categoryId}" : {
       "get" : {
         "security": [{
-          "CategoryAuth" : []
+          "SecurityAuth": []
         }],
         "tags": ["Category API"],
         "summary": "Get category by Id",
@@ -130,7 +130,7 @@
       },
       "put" : {
         "security": [{
-          "CategoryAuth" : []
+          "SecurityAuth": []
         }],
         "tags": ["Category API"],
         "summary": "Update category by Id",
@@ -177,7 +177,7 @@
       },
       "delete": {
         "security": [{
-          "CategoryAuth" : []
+          "SecurityAuth": []
         }],
         "tags": ["Category API"],
         "summary": "Delete category by Id",
@@ -210,11 +210,211 @@
           }
         }
       }
+    },
+    "/merchants": {
+      "get": {
+        "security": [{
+          "SecurityAuth" : []
+        }],
+        "tags": [
+          "merchant API"
+        ],
+        "description": "List all merchants",
+        "summary": "List all merchants",
+        "responses": {
+          "200": {
+            "description": "Success get all merchants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Merchant"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "security": [{
+          "SecurityAuth" : []
+        }],
+        "tags": ["merchant API"],
+        "description": "Create new Merchant",
+        "summary": "Create new Merchant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrUpdateMerchant"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success Create Merchant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code" : {
+                      "type": "number"
+                    },
+                    "status" : {
+                      "type": "string"
+                    },
+                    "data" : {
+                      "$ref": "#/components/schemas/Merchant"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/merchants/{merchantId}" : {
+      "get" : {
+        "security": [{
+          "SecurityAuth" : []
+        }],
+        "tags": ["merchant API"],
+        "summary": "Get merchant by Id",
+        "description": "Get merchant by id",
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "path",
+            "description": "merchant Id"
+          }
+        ],
+        "responses": {
+          "200" : {
+            "description": "Success get Merchant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code" : {
+                      "type": "number"
+                    },
+                    "status" : {
+                      "type": "string"
+                    },
+                    "data" : {
+                      "$ref": "#/components/schemas/Merchant"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "security": [{
+          "SecurityAuth" : []
+        }],
+        "tags": ["merchant API"],
+        "summary": "Update merchant by Id",
+        "description": "Update merchant by Id",
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "path",
+            "description": "merchant Id"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrUpdateMerchant"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200" : {
+            "description": "Success get Merchant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code" : {
+                      "type": "number"
+                    },
+                    "status" : {
+                      "type": "string"
+                    },
+                    "data" : {
+                      "$ref": "#/components/schemas/Merchant"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "security": [{
+          "SecurityAuth" : []
+        }],
+        "tags": ["merchant API"],
+        "summary": "Delete merchant by Id",
+        "description": "Delete merchant by id",
+        "parameters": [
+          {
+            "name": "merchantId",
+            "in": "path",
+            "description": "merchant Id"
+          }
+        ],
+        "responses": {
+          "200" : {
+            "description": "Success delete Merchant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code" : {
+                      "type": "number"
+                    },
+                    "status" : {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "securitySchemes": {
-      "CategoryAuth" : {
+      "SecurityAuth": {
         "type": "apiKey",
         "in" : "header",
         "name": "X-API-Key",
@@ -238,6 +438,46 @@
           },
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "CreateOrUpdateMerchant" : {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number"
+          }
+        }
+      },
+      "Merchant" : {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number"
           }
         }
       }
